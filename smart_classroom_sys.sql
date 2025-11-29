@@ -11,7 +11,7 @@
  Target Server Version : 50743 (5.7.43-log)
  File Encoding         : 65001
 
- Date: 29/11/2025 12:19:43
+ Date: 29/11/2025 14:09:51
 */
 
 SET NAMES utf8mb4;
@@ -336,54 +336,6 @@ INSERT INTO `classroom_reservation` VALUES (62, '202303002', '周八', 'J1', '10
 INSERT INTO `classroom_reservation` VALUES (63, '202205001', '孙十二', 'J1', '101', '2025-11-20', '08:00:00', '10:00:00', 'testtesttesttesttest', 2, '2025-11-19 19:47:24', 'stu', 'system', NULL, '2025-11-20 13:54:00', '预约时间已过，自动失效', NULL, NULL, 0);
 
 -- ----------------------------
--- Table structure for dorm_build
--- ----------------------------
-DROP TABLE IF EXISTS `dorm_build`;
-CREATE TABLE `dorm_build`  (
-  `dormbuild_id` int(11) NOT NULL COMMENT '宿舍楼号码',
-  `dormbuild_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '宿舍楼名称',
-  `dormbuild_detail` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '宿舍楼备注',
-  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '主键',
-  PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = DYNAMIC;
-
--- ----------------------------
--- Records of dorm_build
--- ----------------------------
-INSERT INTO `dorm_build` VALUES (1, '一号教学楼', '学生可预约', 1);
-INSERT INTO `dorm_build` VALUES (2, '二号教学楼', '学生可预约', 2);
-INSERT INTO `dorm_build` VALUES (3, '三号教学楼', '仅老师可预约', 3);
-INSERT INTO `dorm_build` VALUES (4, '四号教学楼', '仅老师可预约', 4);
-
--- ----------------------------
--- Table structure for dorm_room
--- ----------------------------
-DROP TABLE IF EXISTS `dorm_room`;
-CREATE TABLE `dorm_room`  (
-  `dormroom_id` int(11) NOT NULL COMMENT '宿舍房间号',
-  `dormbuild_id` int(11) NOT NULL COMMENT '宿舍楼号',
-  `floor_num` int(11) NOT NULL COMMENT '楼层',
-  `max_capacity` int(11) NOT NULL DEFAULT 4 COMMENT '房间最大入住人数',
-  `current_capacity` int(11) NOT NULL DEFAULT 0 COMMENT '当前房间入住人数',
-  `first_bed` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '一号床位',
-  `second_bed` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '二号床位',
-  `third_bed` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '三号床位',
-  `fourth_bed` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '四号床位',
-  PRIMARY KEY (`dormroom_id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = DYNAMIC;
-
--- ----------------------------
--- Records of dorm_room
--- ----------------------------
-INSERT INTO `dorm_room` VALUES (1101, 1, 1, 4, 2, 'stu22', NULL, NULL, 'stu4');
-INSERT INTO `dorm_room` VALUES (1103, 1, 1, 4, 4, 'stu8', 'stu9', 'stu10', 'stu11');
-INSERT INTO `dorm_room` VALUES (1104, 1, 1, 4, 2, 'stu2', 'stu3', NULL, NULL);
-INSERT INTO `dorm_room` VALUES (1201, 1, 2, 3, 2, 'stu1', 'stu5', NULL, NULL);
-INSERT INTO `dorm_room` VALUES (2101, 2, 1, 4, 3, 'stu12', 'stu13', 'stu14', NULL);
-INSERT INTO `dorm_room` VALUES (3101, 3, 1, 4, 3, 'stu15', 'stu16', 'stu16', NULL);
-INSERT INTO `dorm_room` VALUES (4102, 4, 1, 4, 3, 'stu17', 'stu18', 'stu19', NULL);
-
--- ----------------------------
 -- Table structure for manager
 -- ----------------------------
 DROP TABLE IF EXISTS `manager`;
@@ -483,54 +435,6 @@ INSERT INTO `repair` VALUES (1, '强强', 1, 1101, '水龙头损坏', '水龙头
 INSERT INTO `repair` VALUES (2, '张三', 1, 1101, '阳台漏水', '阳台使用时会漏水请来修理', '未完成', '2023-10-14 20:37:35', NULL);
 
 -- ----------------------------
--- Table structure for student
--- ----------------------------
-DROP TABLE IF EXISTS `student`;
-CREATE TABLE `student`  (
-  `username` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '学号',
-  `password` varchar(32) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '123456' COMMENT '密码',
-  `age` int(10) UNSIGNED NOT NULL COMMENT '年龄',
-  `name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '姓名',
-  `gender` enum('男','女') CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '男' COMMENT '性别',
-  `phone_num` varchar(11) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '手机号',
-  `email` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '邮箱',
-  `avatar` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '头像',
-  `major` varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '专业',
-  `grade` varchar(20) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '年级（如2021级）',
-  `role` varchar(20) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT 'teacher',
-  PRIMARY KEY (`username`) USING BTREE,
-  UNIQUE INDEX `stu_num`(`username`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = DYNAMIC;
-
--- ----------------------------
--- Records of student
--- ----------------------------
-INSERT INTO `student` VALUES ('202101000', '123456', 20, '学生测试', '男', '13233332222', NULL, NULL, '计算机科学与技术', '2021级', 'student');
-INSERT INTO `student` VALUES ('202101001', '123456', 18, '张三', '男', '15833332222', '123@qq.com', 'c4063718784b4e259a61c3e56f2ba01d.png', '计算机科学与技术', '2021级', 'student');
-INSERT INTO `student` VALUES ('202101002', '123456', 18, '田田', '男', '15875359641', NULL, NULL, '计算机科学与技术', '2021级', 'student');
-INSERT INTO `student` VALUES ('202101003', '123456', 18, '吉安', '男', '15798657350', NULL, NULL, '计算机科学与技术', '2021级', 'student');
-INSERT INTO `student` VALUES ('202101004', '123456', 22, '力力', '男', '15878965874', NULL, NULL, '计算机科学与技术', '2021级', 'student');
-INSERT INTO `student` VALUES ('202101005', '123456', 19, '哦哦', '男', '15897535478', NULL, NULL, '计算机科学与技术', '2021级', 'student');
-INSERT INTO `student` VALUES ('202101006', '123456', 18, '泡泡', '男', '18987554765', NULL, NULL, '软件工程', '2021级', 'student');
-INSERT INTO `student` VALUES ('202101007', '123456', 15, '刚刚', '男', '15897543854', NULL, NULL, '软件工程', '2021级', 'student');
-INSERT INTO `student` VALUES ('202101008', '123456', 18, '七七', '男', '12332143215', NULL, NULL, '软件工程', '2021级', 'student');
-INSERT INTO `student` VALUES ('202101009', '123456', 20, '德萨', '男', '15889658741', NULL, NULL, '软件工程', '2021级', 'student');
-INSERT INTO `student` VALUES ('202201011', '123456', 16, '巧巧', '女', '18922223333', NULL, NULL, '电子信息工程', '2022级', 'student');
-INSERT INTO `student` VALUES ('202201012', '123456', 17, '丽丽', '女', '17922222222', NULL, NULL, '电子信息工程', '2022级', 'student');
-INSERT INTO `student` VALUES ('202201013', '123456', 18, '美美', '女', '15822222222', NULL, NULL, '电子信息工程', '2022级', 'student');
-INSERT INTO `student` VALUES ('202201014', '123456', 20, '拉拉', '女', '13355556666', NULL, NULL, '电子信息工程', '2022级', 'student');
-INSERT INTO `student` VALUES ('202201015', '123456', 18, '贝贝', '男', '15899999999', NULL, NULL, '电子信息工程', '2022级', 'student');
-INSERT INTO `student` VALUES ('202201016', '123456', 18, '力力', '男', '14596475257', NULL, NULL, '通信工程', '2022级', 'student');
-INSERT INTO `student` VALUES ('202201017', '123456', 18, '阿成', '男', '15896542147', NULL, NULL, '通信工程', '2022级', 'student');
-INSERT INTO `student` VALUES ('202201018', '123456', 19, '阿达', '女', '14785635874', 'akk@akkmail.com', NULL, '通信工程', '2022级', 'student');
-INSERT INTO `student` VALUES ('202201019', '123456', 19, '帕森斯', '男', '15889658475', NULL, NULL, '通信工程', '2022级', 'student');
-INSERT INTO `student` VALUES ('202201020', '123456', 21, '柠檬', '男', '15874563558', NULL, NULL, '通信工程', '2022级', 'student');
-INSERT INTO `student` VALUES ('202301021', '123456', 21, '面对', '男', '15889635874', NULL, NULL, '自动化', '2023级', 'student');
-INSERT INTO `student` VALUES ('202301022', '123456', 25, '等等', '男', '13412341234', 'akkk@kkk.com', NULL, '自动化', '2023级', 'student');
-INSERT INTO `student` VALUES ('2024010401', '123456', 18, '张明', '男', '13800138000', 'zhang@example.com', NULL, '人工智能', '2024级', 'teacher');
-INSERT INTO `student` VALUES ('2024010402', '123456', 19, '李华', '女', '13900139000', 'li@example.com', NULL, '数据科学', '2024级', 'teacher');
-
--- ----------------------------
 -- Table structure for teacher
 -- ----------------------------
 DROP TABLE IF EXISTS `teacher`;
@@ -553,27 +457,5 @@ INSERT INTO `teacher` VALUES ('T001', 'e10adc3949ba59abbe56e057f20f883e', '测�
 INSERT INTO `teacher` VALUES ('T002', '123456', '测试', '计算机科学', '讲师', '18899672068', 1, 'teacher');
 INSERT INTO `teacher` VALUES ('T003', '123456', '孙国亮', '物理学院', '讲师', '16927468286', 1, 'teacher');
 INSERT INTO `teacher` VALUES ('T004', '123456', '孙立', '电子信息学院', '讲师', '19867252967', 1, 'teacher');
-
--- ----------------------------
--- Table structure for visitor
--- ----------------------------
-DROP TABLE IF EXISTS `visitor`;
-CREATE TABLE `visitor`  (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '姓名',
-  `gender` enum('男','女') CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '男' COMMENT '性别',
-  `phone_num` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '电话',
-  `origin_city` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '来源城市',
-  `visit_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '来访时间',
-  `content` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL COMMENT '事情',
-  PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = DYNAMIC;
-
--- ----------------------------
--- Records of visitor
--- ----------------------------
-INSERT INTO `visitor` VALUES (1, '张三', '男', '13433333333', '武汉', '2023-10-29 17:34:52', '探访孩子');
-INSERT INTO `visitor` VALUES (2, '李四', '女', '15722222222', '江苏', '2023-11-01 17:08:06', '运送快递');
-INSERT INTO `visitor` VALUES (3, '啊啊', '女', '13255555555', '湖北', '2023-12-25 16:41:21', '运送食品');
 
 SET FOREIGN_KEY_CHECKS = 1;
