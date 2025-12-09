@@ -8,16 +8,27 @@ import com.example.springboot.service.ClassroomRepairService;
 import com.example.springboot.service.StudentService;
 import com.example.springboot.service.TeacherService;
 import com.example.springboot.unit.ClassroomPermissionUtil;
+import com.example.springboot.unit.FileUploadUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpSession;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 整合：教室报修 + 图片上传 控制器（修复 log 和 Result 方法错误）
+ */
 @RestController
-@RequestMapping("/repair/classroom")
+@RequestMapping("/repair/classroom") // 保持原有前缀不变
 public class ClassroomRepairController {
+
+    // 修复1：手动创建 Logger 实例（无需 Lombok @Slf4j）
+    private static final Logger log = LoggerFactory.getLogger(ClassroomRepairController.class);
 
     // 状态常量定义（统一管理，避免硬编码）
     private static final Integer STATUS_PENDING = 0;    // 未处理
@@ -33,6 +44,44 @@ public class ClassroomRepairController {
     @Autowired
     private TeacherService teacherService;
 
+    @Autowired
+    private FileUploadUtil fileUploadUtil;
+
+    // ====================== 图片上传相关接口（修复 Result.success 方法调用）======================
+    /**
+     * 报修图片上传（支持jpg/png，限制5MB，需登录）
+     * 完整路径：/repair/classroom/upload/repair
+     */
+    // ====================== 图片上传接口（单参数返回文件路径）======================
+    @PostMapping("/upload/repair")
+    public Result<?> uploadRepairImage(@RequestParam("file") MultipartFile file, HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return Result.error("-1", "请先登录再上传图片");
+        }
+
+        try {
+            // 文件类型校验
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                return Result.error("-1", "请上传jpg/png格式的图片文件");
+            }
+
+            // 文件大小校验（5MB）
+            if (file.getSize() > 5 * 1024 * 1024) {
+                return Result.error("-1", "文件大小不能超过5MB");
+            }
+
+            // 上传文件获取路径
+            String filePath = fileUploadUtil.uploadFile(file);
+
+            // 单参数返回：仅返回文件路径（前端通过 response.data 获取）
+            return Result.success(filePath);
+        } catch (Exception e) {
+            log.error("图片上传失败，用户名：{}", username, e);
+            return Result.error("-1", "图片上传失败：" + e.getMessage());
+        }
+    }
     /**
      * 学生/老师提交教室报修（需登录，权限由ClassroomPermissionUtil控制）
      */
@@ -258,4 +307,26 @@ public class ClassroomRepairController {
         String[] buildingArray = visibleBuildings.split(",");
         return Result.success(buildingArray);
     }
+    @GetMapping("/myPendingCount")
+    public Result<?> getMyPendingRepairCount(HttpSession session) {
+        String username = (String) session.getAttribute("username");
+
+        if (username == null) {
+            return Result.error("-1", "请先登录");
+        }
+
+        try {
+            // 待跟进状态：未处理(0) + 处理中(1)
+            QueryWrapper<ClassroomRepair> query = new QueryWrapper<>();
+            query.eq("reporter_id", username)
+                    .in("status", STATUS_PENDING, STATUS_REPAIRING);
+
+            long pendingCount = classroomRepairService.count(query);
+            return Result.success(pendingCount);
+        } catch (Exception e) {
+            log.error("查询报修待跟进数失败", e);
+            return Result.error("-1", "查询失败");
+        }
+    }
+
 }

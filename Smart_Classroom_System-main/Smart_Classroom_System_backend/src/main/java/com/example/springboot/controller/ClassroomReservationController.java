@@ -7,14 +7,18 @@ import com.example.springboot.entity.ClassroomReservation;
 import com.example.springboot.mapper.ClassroomReservationMapper;
 import com.example.springboot.service.ClassroomReservationService;
 import com.example.springboot.unit.ClassroomPermissionUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -315,4 +319,82 @@ public class ClassroomReservationController {
             return Result.error("-1", "统计个人今日预约次数失败：" + e.getMessage());
         }
     }
+    private static final Logger log = LoggerFactory.getLogger(ClassroomReservationController.class);
+    @GetMapping("/myCount")
+    public Result<?> getMyReservationCount(HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        String identity = (String) session.getAttribute("identity");
+
+        // 登录状态校验
+        if (username == null || identity == null) {
+            return Result.error("-1", "请先登录");
+        }
+
+        try {
+            // 实际业务中替换为service查询
+            // 状态说明：0=待审核，1=已通过，2=已拒绝，3=已过期
+            QueryWrapper<ClassroomReservation> pendingQw = new QueryWrapper<>();
+            pendingQw.eq("username", username)
+                    .eq("check_status", 0);
+            long pending = reservationService.count(pendingQw);
+
+            QueryWrapper<ClassroomReservation> approvedQw = new QueryWrapper<>();
+            approvedQw.eq("username", username)
+                    .eq("check_status", 1);
+            long approved = reservationService.count(approvedQw);
+
+            Map<String, Long> countMap = new HashMap<>();
+            countMap.put("pending", pending);
+            countMap.put("approved", approved);
+            return Result.success(countMap);
+        } catch (Exception e) {
+            log.error("查询预约统计失败", e);
+            return Result.error("-1", "查询失败");
+        }
+    }
+    /**
+     * 统计用户的签到/签退状态数量
+     * （待签到：checkStatus=0；已签到：checkStatus=1；已完成：checkStatus=2）
+     */
+    @GetMapping("/checkInOutCount")
+    public Result<?> getCheckInOutCount(HttpSession session) {  // 移除username参数
+        // 1. 从session获取当前登录用户（无需前端传递）
+        String username = (String) session.getAttribute("username");
+        if (username == null || username.trim().isEmpty()) {
+            return Result.error("-1", "请先登录");
+        }
+
+        try {
+            // 2. 统计各状态数量（使用session中的username）
+            QueryWrapper<ClassroomReservation> query = new QueryWrapper<>();
+            query.eq("username", username);
+
+            // 待签到（已通过审核但未签到）
+            long pendingCheckinCount = reservationService.count(
+                    query.clone().eq("status", 1).eq("check_status", 0)
+            );
+
+            // 已签到（未签退）
+            long checkedInCount = reservationService.count(
+                    query.clone().eq("check_status", 1)
+            );
+
+            // 已完成（已签退）
+            long completedCount = reservationService.count(
+                    query.clone().eq("check_status", 2)
+            );
+
+            // 3. 封装结果
+            Map<String, Long> countMap = new HashMap<>();
+            countMap.put("pendingCheckinCount", pendingCheckinCount);
+            countMap.put("checkedInCount", checkedInCount);
+            countMap.put("completedCount", completedCount);
+
+            return Result.success(countMap);
+        } catch (Exception e) {
+            log.error("统计签到签退数据失败", e);
+            return Result.error("-1", "统计签到签退数据失败：" + e.getMessage());
+        }
+    }
+
 }

@@ -34,7 +34,7 @@ public class ClassroomRepair {
     private Integer status; // 报修状态：pending-待处理，repairing-维修中，solved-已解决
     @TableField("submit_time")
     private LocalDateTime submitTime; // 提交时间
-
+    private String faultPhotos;
     private String handlerId; // 处理人ID（维修人员/管理员ID）
     private String handlerName; // 处理人姓名
     @TableField("handle_time")

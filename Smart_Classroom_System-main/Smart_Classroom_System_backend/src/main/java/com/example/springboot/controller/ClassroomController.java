@@ -7,6 +7,8 @@ import com.example.springboot.entity.ClassroomReservation;
 import com.example.springboot.service.ClassroomReservationService;
 import com.example.springboot.service.ClassroomService;
 import com.example.springboot.unit.ClassroomPermissionUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,7 +28,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/classroom")
 public class ClassroomController {
-
+    private static final Logger log = LoggerFactory.getLogger(ClassroomController.class);
     @Resource
     private ClassroomReservationService reservationService;
     @Autowired
@@ -514,4 +516,88 @@ public class ClassroomController {
         return reservations.stream()
                 .noneMatch(res -> "08:00".equals(res.getStartTime()) && "22:00".equals(res.getEndTime()));
     }
+    /**
+     * 本人可预约楼栋当日可用教室文案
+     */
+    @GetMapping("/available/myBuilding")
+    public Result<?> getMyBuildingAvailable(
+            @RequestParam String date,
+            HttpSession session) {
+        String identity = (String) session.getAttribute("identity");
+
+        if (identity == null) {
+            return Result.error("-1", "请先登录");
+        }
+
+        try {
+            // 验证日期格式
+            LocalDate.parse(date, DATE_FORMATTER);
+
+            // 获取用户可访问的教学楼
+            String defaultBuildings = ClassroomPermissionUtil.getDefaultBuildings(identity);
+            if (defaultBuildings.isEmpty()) {
+                return Result.success("暂无可用教室");
+            }
+
+            // 实际业务中替换为service查询各楼栋可用数量
+            Map<String, Integer> buildingCount = new HashMap<>();
+            for (String buildingId : defaultBuildings.split(",")) {
+                // 模拟数据，实际需查询该楼栋当日可用教室数
+                buildingCount.put(buildingId, new Random().nextInt(5) + 1);
+            }
+
+            // 格式化返回文本（如：J1:3间 | J2:5间）
+            StringJoiner sj = new StringJoiner(" | ");
+            buildingCount.forEach((id, count) -> sj.add(id + ":" + count + "间"));
+            return Result.success(sj.toString());
+        } catch (DateTimeParseException e) {
+            return Result.error("-1", "日期格式错误，正确格式为yyyy-MM-dd");
+        } catch (Exception e) {
+            log.error("查询可用教室失败", e);
+            return Result.error("-1", "查询失败");
+        }
+    }
+
+    /**
+     * 本人可预约楼栋可用教室图表数据
+     */
+    @GetMapping("/available/myBuildingChart")
+    public Result<?> getMyBuildingChart(
+            @RequestParam String date,
+            HttpSession session) {
+        String identity = (String) session.getAttribute("identity");
+
+        if (identity == null) {
+            return Result.error("-1", "请先登录");
+        }
+
+        try {
+            // 验证日期格式
+            LocalDate.parse(date, DATE_FORMATTER);
+
+            // 获取用户可访问的教学楼
+            String defaultBuildings = ClassroomPermissionUtil.getDefaultBuildings(identity);
+            if (defaultBuildings.isEmpty()) {
+                return Result.success(Collections.emptyList());
+            }
+
+            // 实际业务中替换为service查询数据
+            List<Map<String, Object>> chartData = new ArrayList<>();
+            for (String buildingId : defaultBuildings.split(",")) {
+                // 模拟数据，实际需查询该楼栋当日可用教室数
+                Map<String, Object> item = new HashMap<>();
+                item.put("name", buildingId + "教学楼");
+                item.put("value", new Random().nextInt(5) + 1);
+                chartData.add(item);
+            }
+
+            return Result.success(chartData);
+        } catch (DateTimeParseException e) {
+            return Result.error("-1", "日期格式错误，正确格式为yyyy-MM-dd");
+        } catch (Exception e) {
+            log.error("查询图表数据失败", e);
+            return Result.error("-1", "查询失败");
+        }
+    }
+    
 }

@@ -10,10 +10,15 @@
             <el-option label="处理中" :value="1"></el-option>
             <el-option label="已解决" :value="2"></el-option>
           </el-select>
-          <!-- 教学楼筛选 -->
+          <!-- 教学楼筛选（修复key警告） -->
           <el-select v-model="buildingId" placeholder="全部教学楼" @change="loadRepairList">
             <el-option label="全部教学楼" value=""></el-option>
-            <el-option v-for="building in visibleBuildings" :key="building" :label="building + '教学楼'" :value="building"></el-option>
+            <el-option 
+              v-for="building in visibleBuildings" 
+              :key="`building-${building}`" 
+              :label="building + '教学楼'" 
+              :value="building"
+            ></el-option>
           </el-select>
         </div>
       </div>
@@ -119,8 +124,8 @@
       </el-pagination>
     </el-card>
 
-    <!-- 处理报修对话框 -->
-    <el-dialog title="处理报修" v-model="handleDialogVisible" width="500px">
+    <!-- 处理报修对话框（新增图片查看） -->
+    <el-dialog title="处理报修" v-model="handleDialogVisible" width="600px">
       <el-form :model="handleForm" label-width="80px" ref="handleFormRef" :rules="handleRules">
         <el-form-item label="报修ID">
           <el-input v-model="handleForm.id" disabled></el-input>
@@ -134,10 +139,27 @@
         <el-form-item label="问题描述">
           <el-input v-model="handleForm.problemDetail" type="textarea" rows="3" disabled></el-input>
         </el-form-item>
+        
+        <!-- 新增：故障图片显示 -->
+        <el-form-item label="故障图片" v-if="handleForm.faultPhotos && getImageList(handleForm.faultPhotos).length">
+          <div class="image-preview">
+            <el-image
+              v-for="(img, index) in getImageList(handleForm.faultPhotos)"
+              :key="index"
+              :src="getImageUrl(img)"
+              :preview-src-list="getImageList(handleForm.faultPhotos).map(url => getImageUrl(url))"
+              fit="cover"
+              class="preview-image"
+              lazy
+            ></el-image>
+          </div>
+        </el-form-item>
+        
+        <!-- 修复：状态值改为数字1/2，匹配后端 -->
         <el-form-item label="处理状态" prop="status">
           <el-radio-group v-model="handleForm.status">
-            <el-radio label="repairing">处理中</el-radio>
-            <el-radio label="solved">已解决</el-radio>
+            <el-radio :label="1">处理中</el-radio>
+            <el-radio :label="2">已解决</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="处理结果" prop="handleResult">
@@ -157,7 +179,7 @@
       </div>
     </el-dialog>
 
-    <!-- 详情对话框 -->
+    <!-- 详情对话框（新增图片查看） -->
     <el-dialog title="报修详情" v-model="detailDialogVisible" width="600px">
       <el-descriptions column="1" border>
         <el-descriptions-item label="报修ID">{{ detailData.id }}</el-descriptions-item>
@@ -165,6 +187,22 @@
         <el-descriptions-item label="教室号">{{ detailData.classroomId }}</el-descriptions-item>
         <el-descriptions-item label="设备类型">{{ detailData.deviceType }}</el-descriptions-item>
         <el-descriptions-item label="问题描述">{{ detailData.problemDetail }}</el-descriptions-item>
+        
+        <!-- 新增：故障图片显示 -->
+        <el-descriptions-item label="故障图片" v-if="detailData.faultPhotos && getImageList(detailData.faultPhotos).length">
+          <div class="image-preview">
+            <el-image
+              v-for="(img, index) in getImageList(detailData.faultPhotos)"
+              :key="index"
+              :src="getImageUrl(img)"
+              :preview-src-list="getImageList(detailData.faultPhotos).map(url => getImageUrl(url))"
+              fit="cover"
+              class="preview-image"
+              lazy
+            ></el-image>
+          </div>
+        </el-descriptions-item>
+        
         <el-descriptions-item label="报修人">{{ detailData.reporterName }}</el-descriptions-item>
         <el-descriptions-item label="报修角色">{{ detailData.reporterRole === 'stu' ? '学生' : '教师' }}</el-descriptions-item>
         <el-descriptions-item label="提交时间">{{ formatDateTime(detailData.submitTime) }}</el-descriptions-item>
@@ -191,7 +229,7 @@ import { DocumentRemove } from '@element-plus/icons-vue';
 
 const router = useRouter();
 
-// 状态映射（与后端一致）
+// 状态映射（与后端一致：0=待处理，1=处理中，2=已解决）
 const statusTextMap = { 0: '待处理', 1: '处理中', 2: '已解决' };
 const statusTypeMap = { 0: 'warning', 1: 'info', 2: 'success' };
 
@@ -205,7 +243,7 @@ const state = reactive({
   status: '',
   buildingId: '',
   loading: false,
-  isSubmitting: false, // 新增：提交按钮加载状态
+  isSubmitting: false,
   handleDialogVisible: false,
   detailDialogVisible: false,
   handleForm: {
@@ -213,7 +251,8 @@ const state = reactive({
     buildingId: '',
     classroomId: '',
     problemDetail: '',
-    status: 'repairing',
+    faultPhotos: '',
+    status: 1, // 修复：默认值改为数字1（处理中）
     handleResult: ''
   },
   detailData: {},
@@ -234,9 +273,29 @@ const {
 
 const handleFormRef = ref(null);
 
-// 格式化时间
+// 格式化时间（兼容空值）
 const formatDateTime = (dateTime) => {
-  return dateTime ? dayjs(dateTime).format('YYYY-MM-DD HH:mm:ss') : '';
+  if (!dateTime) return '';
+  try {
+    return dayjs(dateTime).format('YYYY-MM-DD HH:mm:ss');
+  } catch (error) {
+    return dateTime;
+  }
+};
+
+// 新增：处理图片路径（核心！替换为你的后端文件访问接口地址）
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return '';
+  // 必改：替换为后端实际的文件访问接口（比如http://127.0.0.1:8080）
+  const baseUrl = 'http://localhost:9090'; 
+  if (imagePath.startsWith('http')) return imagePath;
+  return `${baseUrl}/file/access?path=${encodeURIComponent(imagePath)}`;
+};
+
+// 新增：分割图片路径（去重+过滤空值）
+const getImageList = (photos) => {
+  if (!photos) return [];
+  return [...new Set(photos.split(',').filter(img => img.trim()))];
 };
 
 // 加载可见教学楼
@@ -251,12 +310,16 @@ const loadVisibleBuildings = async () => {
       ElMessage.error('获取教学楼权限失败: ' + (response.msg || '未知错误'));
     }
   } catch (error) {
+    // 404友好提示
+    if (error.response?.status === 404) {
+      ElMessage.error('接口不存在：/repair/classroom/getVisibleBuildings，请确认后端接口路径');
+    }
     console.error('获取可见教学楼失败:', error);
     ElMessage.error('加载教学楼列表失败，请刷新页面重试');
   }
 };
 
-// 加载报修列表
+// 加载报修列表（修复参数处理，避免传undefined）
 const loadRepairList = async () => {
   loading.value = true;
   try {
@@ -267,13 +330,16 @@ const loadRepairList = async () => {
       buildingId: buildingId.value
     });
     
+    // 构建查询参数（仅传有值的参数）
+    const queryParams = {
+      pageNum: pageNum.value,
+      pageSize: pageSize.value
+    };
+    if (status.value !== '') queryParams.status = status.value;
+    if (buildingId.value) queryParams.buildingId = buildingId.value;
+    
     const response = await request.get('/repair/classroom/admin/all', {
-      params: {
-        pageNum: pageNum.value,
-        pageSize: pageSize.value,
-        status: status.value || undefined,
-        buildingId: buildingId.value || undefined
-      }
+      params: queryParams
     });
 
     if (response.code === "0") {
@@ -283,6 +349,10 @@ const loadRepairList = async () => {
       ElMessage.error(response.msg || '获取报修列表失败');
     }
   } catch (error) {
+    // 404友好提示
+    if (error.response?.status === 404) {
+      ElMessage.error('接口不存在：/repair/classroom/admin/all，请确认后端接口路径');
+    }
     console.error('加载报修列表失败:', error);
     ElMessage.error(error.response?.data?.msg || '网络错误，请重试');
   } finally {
@@ -302,11 +372,14 @@ const loadStatData = async () => {
       ElMessage.error('获取统计数据失败: ' + (response.msg || '未知错误'));
     }
   } catch (error) {
+    if (error.response?.status === 404) {
+      ElMessage.error('接口不存在：/repair/classroom/countByStatus，请确认后端接口路径');
+    }
     console.error('统计数据加载失败:', error);
   }
 };
 
-// 处理报修
+// 处理报修（修复状态默认值为数字）
 const handleRepair = (row) => {
   console.log('准备处理报修记录:', row);
   try {
@@ -315,20 +388,20 @@ const handleRepair = (row) => {
       return;
     }
     
-    // 根据当前状态设置默认处理状态
-    const defaultStatus = row.status === 0 ? 'repairing' : 'solved';
+    // 根据当前状态设置默认处理状态（数字值）
+    const defaultStatus = row.status === 0 ? 1 : 2;
     
-    // 填充表单数据
+    // 填充表单数据（新增faultPhotos）
     handleForm.value = {
       id: row.id || '',
       buildingId: row.buildingId || '',
       classroomId: row.classroomId || '',
       problemDetail: row.problemDetail || '',
-      status: defaultStatus, // 使用动态默认值
+      faultPhotos: row.faultPhotos || '', // 新增：传递图片路径
+      status: defaultStatus,
       handleResult: ''
     };
     
-    // 显示对话框
     handleDialogVisible.value = true;
     console.log('处理对话框已显示');
   } catch (error) {
@@ -337,7 +410,7 @@ const handleRepair = (row) => {
   }
 };
 
-// 提交处理结果
+// 提交处理结果（修复状态值为数字，匹配后端）
 const submitHandle = async () => {
   if (!handleFormRef.value) return;
   
@@ -347,33 +420,34 @@ const submitHandle = async () => {
     
     // 确认操作
     await ElMessageBox.confirm(
-      `确定要将状态改为${handleForm.value.status === 'repairing' ? '处理中' : '已解决'}吗？`,
+      `确定要将状态改为${handleForm.value.status === 1 ? '处理中' : '已解决'}吗？`,
       '确认操作',
       { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' }
     );
 
-    // 开始提交
     isSubmitting.value = true;
     console.log('提交处理结果:', handleForm.value);
     
     const response = await request.put('/repair/classroom/handle', {
       id: handleForm.value.id,
-      status: handleForm.value.status,
+      status: handleForm.value.status, // 提交数字状态
       handleResult: handleForm.value.handleResult
     });
 
     if (response.code === "0") {
       ElMessage.success('处理成功');
       handleDialogVisible.value = false;
-      // 刷新数据
       loadRepairList();
       loadStatData();
     } else {
       ElMessage.error(response.msg || '处理失败');
     }
   } catch (error) {
-    if (error.name === 'ValidationError') return; // 表单验证失败
-    if (error === 'cancel') return; // 用户取消操作
+    if (error.name === 'ValidationError') return;
+    if (error === 'cancel') return;
+    if (error.response?.status === 404) {
+      ElMessage.error('接口不存在：/repair/classroom/handle，请确认后端接口路径');
+    }
     console.error('提交处理结果失败:', error);
     ElMessage.error('处理失败，请重试');
   } finally {
@@ -381,7 +455,7 @@ const submitHandle = async () => {
   }
 };
 
-// 查看详情
+// 查看详情（传递图片路径）
 const showDetail = (row) => {
   console.log('查看报修详情:', row);
   detailData.value = { ...row };
@@ -390,28 +464,38 @@ const showDetail = (row) => {
 
 // 分页事件
 const handleSizeChange = (val) => {
-  console.log('分页大小改变为:', val);
   pageSize.value = val;
   loadRepairList();
 };
 const handleCurrentChange = (val) => {
-  console.log('当前页码改变为:', val);
   pageNum.value = val;
   loadRepairList();
 };
 
-// 页面初始化
+// 页面初始化（修复identity解析错误）
 onMounted(async () => {
   console.log('页面开始初始化');
   
-  // 读取身份信息
-  const identityStr = sessionStorage.getItem('identity');
-  const identity = identityStr ? JSON.parse(identityStr) : null;
+  // 修复：安全解析identity（避免JSON.parse报错）
+  let identity = '';
+  try {
+    const identityStr = sessionStorage.getItem('identity');
+    identity = identityStr ? JSON.parse(identityStr) : '';
+  } catch (error) {
+    identity = '';
+    console.error('解析身份信息失败:', error);
+  }
   console.log('当前用户身份:', identity);
 
   // 检查登录状态
-  const userStr = sessionStorage.getItem('user');
-  const user = userStr ? JSON.parse(userStr) : null;
+  let user = null;
+  try {
+    const userStr = sessionStorage.getItem('user');
+    user = userStr ? JSON.parse(userStr) : null;
+  } catch (error) {
+    user = null;
+    console.error('解析用户信息失败:', error);
+  }
   const isLoggedIn = user && user.username;
   console.log('登录状态:', isLoggedIn ? '已登录' : '未登录');
 
@@ -431,7 +515,6 @@ onMounted(async () => {
 
   // 加载数据
   try {
-    console.log('开始加载初始化数据');
     await Promise.all([
       loadVisibleBuildings(),
       loadRepairList(),
@@ -484,8 +567,40 @@ watch(handleDialogVisible, (newVal) => {
   color: #666;
 }
 .empty-state p { margin-top: 10px; font-size: 14px; }
-::v-deep .el-dialog__body { max-height: 60vh; overflow-y: auto; }
+::v-deep .el-dialog__body { 
+  max-height: 70vh; 
+  overflow-y: auto; 
+  padding: 20px;
+}
 ::v-deep .el-button--primary.is-loading {
   pointer-events: none;
+}
+
+/* 新增：图片预览样式 */
+.image-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 10px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+.preview-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 6px;
+  cursor: zoom-in;
+  object-fit: cover; /* 固定尺寸，避免变形 */
+  border: 1px solid #eee;
+}
+/* 图片预览滚动条美化 */
+.image-preview::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.image-preview::-webkit-scrollbar-thumb {
+  background-color: #ddd;
+  border-radius: 3px;
 }
 </style>

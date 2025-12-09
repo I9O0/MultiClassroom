@@ -65,6 +65,29 @@
           placeholder="请详细描述设备故障情况（至少10个字）..."
         ></el-input>
       </el-form-item>
+
+      <!-- 新增图片上传区域 -->
+      <el-form-item label="故障图片">
+        <el-upload
+          class="upload-demo"
+          action="#"
+          :http-request="handleImageUpload"
+          :on-success="handleUploadSuccess"
+          :on-error="handleUploadError"
+          :on-remove="handleRemove"
+          :file-list="fileList"
+          list-type="picture-preview"
+          :limit="3"
+          :on-exceed="handleExceed"
+        >
+          <el-button type="primary">点击上传</el-button>
+          <template #tip>
+            <div class="el-upload__tip">
+              只能上传jpg/png文件，且不超过5MB，最多上传3张
+            </div>
+          </template>
+        </el-upload>
+      </el-form-item>
       
       <el-form-item>
         <el-button type="primary" @click="submitForm">提交报修</el-button>
@@ -87,10 +110,15 @@ const form = reactive({
   buildingId: '',
   classroomId: '',
   deviceType: '',
-  problemDetail: ''
+  problemDetail: '',
+  faultPhotos: '' // 新增：存储图片路径，多个路径用逗号分隔
 });
 
-// 表单验证规则（不变）
+// 文件上传相关
+const fileList = ref([]); // 上传的文件列表
+const uploadLoading = ref(false); // 上传加载状态
+
+// 表单验证规则
 const rules = {
   buildingId: [
     { required: true, message: '请选择教学楼', trigger: 'change' }
@@ -112,7 +140,7 @@ const buildingList = ref([]);
 const classroomList = ref([]);
 const loading = ref(false);
 
-// 获取教学楼列表（不变）
+// 获取教学楼列表
 const getBuildingList = async () => {
   loading.value = true;
   try {
@@ -124,7 +152,7 @@ const getBuildingList = async () => {
       if (identity === 'stu') {
         buildingList.value = allBuildings.filter(b => ['J1', 'J2'].includes(b.buildingId));
       } else if (identity === 'teacher') {
-        buildingList.value = allBuildings.filter(b => ['J3', 'J4'].includes(buildingId));
+        buildingList.value = allBuildings.filter(b => ['J3', 'J4'].includes(b.buildingId));
       } else {
         buildingList.value = allBuildings;
       }
@@ -143,7 +171,7 @@ const getBuildingList = async () => {
   }
 };
 
-// 切换教学楼获取教室列表（不变）
+// 切换教学楼获取教室列表
 const handleBuildingChange = async (buildingId) => {
   if (!buildingId) {
     classroomList.value = [];
@@ -178,7 +206,74 @@ const handleBuildingChange = async (buildingId) => {
   }
 };
 
-// 提交报修（核心修改：适配路由守卫+完整子路由路径）
+// 处理图片上传
+const handleImageUpload = async (params) => {
+  uploadLoading.value = true;
+  const file = params.file;
+  
+  try {
+    // 创建FormData对象
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    // 调用后端上传接口
+    const response = await request.post('/repair/classroom/upload/repair', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    
+    if (response.code === "0") {
+      params.onSuccess(response);
+    } else {
+      params.onError(response);
+    }
+  } catch (error) {
+    params.onError(error);
+  } finally {
+    uploadLoading.value = false;
+  }
+};
+
+// 上传成功处理
+const handleUploadSuccess = (response) => {
+  if (response.code === "0") {
+    ElMessage.success('图片上传成功');
+    // 将图片路径添加到表单中，多个路径用逗号分隔
+    if (form.faultPhotos) {
+      form.faultPhotos += ',' + response.data;
+    } else {
+      form.faultPhotos = response.data;
+    }
+  } else {
+    ElMessage.error('图片上传失败：' + (response.msg || '未知错误'));
+  }
+};
+
+// 上传失败处理
+const handleUploadError = (error) => {
+  ElMessage.error('图片上传失败：' + (error.msg || error.message || '网络错误'));
+};
+
+// 移除图片处理
+const handleRemove = (file, fileList) => {
+  // 从表单中移除对应的图片路径
+  if (form.faultPhotos) {
+    const pathToRemove = file.response?.data;
+    if (pathToRemove) {
+      const paths = form.faultPhotos.split(',');
+      const newPaths = paths.filter(path => path !== pathToRemove);
+      form.faultPhotos = newPaths.join(',');
+    }
+  }
+};
+
+// 超出上传数量限制处理
+const handleExceed = (files, fileList) => {
+  ElMessage.warning(`最多只能上传3张图片`);
+};
+
+// 提交报修
 const submitForm = async () => {
   if (!formRef.value) return;
   try {
@@ -235,13 +330,15 @@ const submitForm = async () => {
   }
 };
 
-// 重置表单（不变）
+// 重置表单
 const resetForm = () => {
   formRef.value?.resetFields();
   classroomList.value = [];
+  fileList.value = [];
+  form.faultPhotos = ''; // 清空图片路径
 };
 
-// 页面加载时初始化（不变）
+// 页面加载时初始化
 onMounted(() => {
   getBuildingList();
 });
@@ -264,5 +361,9 @@ onMounted(() => {
 
 .el-form-item {
   margin-bottom: 20px;
+}
+
+.upload-demo {
+  margin-top: 10px;
 }
 </style>

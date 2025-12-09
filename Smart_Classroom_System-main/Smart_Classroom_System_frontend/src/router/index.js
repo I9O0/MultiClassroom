@@ -17,10 +17,9 @@ export const constantRoutes = [
       { path: '/noticeInfo', name: 'NoticeInfo', component: () => import("@/views/NoticeInfo") },
       { path: '/adjustRoomInfo', name: 'AdjustRoomInfo', component: () => import("@/views/AdjustRoomInfo") },
       { path: '/repairInfo', name: 'RepairInfo', component: () => import("@/views/RepairInfo") },
-      { path: '/visitorInfo', name: 'VisitorInfo', component: () => import("@/views/VisitorInfo") },
+
       { path: '/myRoomInfo', name: 'MyRoomInfo', component: () => import("@/views/MyRoomInfo") },
-      { path: '/applyRepairInfo', name: 'ApplyRepairInfo', component: () => import("@/views/ApplyRepairInfo") },
-      { path: '/applyChangeRoom', name: 'ApplyChangeRoom', component: () => import("@/views/ApplyChangeRoom") },
+    
       // 新增：师生共用的教室查询路由（单页面）
       { 
         path: '/classroomQuery', 
