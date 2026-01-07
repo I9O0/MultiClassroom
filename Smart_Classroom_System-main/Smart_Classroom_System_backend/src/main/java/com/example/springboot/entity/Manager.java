@@ -8,12 +8,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 宿舍管理员
+ *  管理员
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-
 @TableName(value = "manager")
 public class Manager {
 
@@ -21,8 +20,7 @@ public class Manager {
     private String username;
     @TableField("password")
     private String password;
-    @TableField("dormbuild_id")
-    private int dormBuildId;
+
     @TableField("name")
     private String name;
     @TableField("gender")
@@ -33,4 +31,10 @@ public class Manager {
     private String phoneNum;
     @TableField("email")
     private String email;
+
+    // 关键新增：密码修改专用临时字段（不映射数据库）
+    @TableField(exist = false) // 告诉MyBatis-Plus该字段不在数据库表中
+    private String oldPass; // 接收前端传入的原密码
+    @TableField(exist = false)
+    private String newPass; // 接收前端传入的新密码
 }

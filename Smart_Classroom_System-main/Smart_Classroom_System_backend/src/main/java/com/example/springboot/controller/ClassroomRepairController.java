@@ -129,7 +129,7 @@ public class ClassroomRepairController {
     }
 
     /**
-     * 管理员/教室管理员查询待处理报修（分页，权限由ClassroomPermissionUtil控制）
+     * 超级管理员/管理员查询待处理报修（分页，权限由ClassroomPermissionUtil控制）
      */
     @GetMapping("/pending")
     public Result<?> getPendingRepairs(
@@ -141,7 +141,7 @@ public class ClassroomRepairController {
         String identity = (String) session.getAttribute("identity");
         // 权限校验：仅admin和manager可查看（两者权限一致）
         if (!ClassroomPermissionUtil.canHandleRepair(identity)) {
-            return Result.error("-1", "无权限：仅管理员和教室管理员可查看");
+            return Result.error("-1", "无权限：仅超级管理员和管理员可查看");
         }
 
         Page<ClassroomRepair> page = new Page<>(pageNum, pageSize);
@@ -162,7 +162,7 @@ public class ClassroomRepairController {
         String identity = (String) session.getAttribute("identity");
         // 权限校验：admin和manager权限一致
         if (!ClassroomPermissionUtil.canHandleRepair(identity)) {
-            return Result.error("-1", "无权限：仅管理员和教室管理员可处理");
+            return Result.error("-1", "无权限：仅管理员和教室超级管理员可处理");
         }
 
         // 参数校验
@@ -241,7 +241,7 @@ public class ClassroomRepairController {
     }
 
     /**
-     * 管理员/教室管理员查询所有报修记录（带筛选）
+     * 超级管理员/管理员查询所有报修记录（带筛选）
      */
     @GetMapping("/admin/all")
     public Result<?> getAllRepairs(
@@ -253,7 +253,7 @@ public class ClassroomRepairController {
 
         String identity = (String) session.getAttribute("identity");
         if (!ClassroomPermissionUtil.canHandleRepair(identity)) {
-            return Result.error("-1", "无权限：仅管理员和教室管理员可查看");
+            return Result.error("-1", "无权限：仅超级管理员和管理员可查看");
         }
 
         Page<ClassroomRepair> page = new Page<>(pageNum, pageSize);
@@ -273,7 +273,7 @@ public class ClassroomRepairController {
     public Result<?> countByStatus(HttpSession session) {
         String identity = (String) session.getAttribute("identity");
         if (!ClassroomPermissionUtil.canHandleRepair(identity)) {
-            return Result.error("-1", "无权限：仅管理员和教室管理员可查看统计数据");
+            return Result.error("-1", "无权限：仅超级管理员和管理员可查看统计数据");
         }
         Map<String, Integer> countMap = classroomRepairService.countByStatus();
         return Result.success(countMap);
@@ -286,7 +286,7 @@ public class ClassroomRepairController {
     public Result<?> countPendingByBuilding(HttpSession session) {
         String identity = (String) session.getAttribute("identity");
         if (!ClassroomPermissionUtil.canHandleRepair(identity)) {
-            return Result.error("-1", "无权限：仅管理员和教室管理员可查看统计数据");
+            return Result.error("-1", "无权限：仅超级管理员和管理员可查看统计数据");
         }
         Map<String, Integer> buildingCountMap = classroomRepairService.countPendingByBuilding(STATUS_PENDING);
         return Result.success(buildingCountMap);

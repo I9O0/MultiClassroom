@@ -119,7 +119,7 @@ public class ClassroomController {
         String identity = (String) session.getAttribute("identity");
         // 允许admin和manager访问
         if (!"admin".equals(identity) && !"manager".equals(identity)) {
-            return Result.error("-1", "无权限：仅管理员和宿舍管理员可查看所有教室");
+            return Result.error("-1", "无权限：仅超级管理员和管理员可查看所有教室");
         }
         List<Classroom> allClassrooms = classroomService.list();
         return Result.success(allClassrooms);
@@ -134,7 +134,7 @@ public class ClassroomController {
             HttpSession session) {
         String identity = (String) session.getAttribute("identity");
         if (!ClassroomPermissionUtil.isAdminOrmanager(identity)) {
-            return Result.error("-1", "无权限：仅管理员和宿管可修改教室信息");
+            return Result.error("-1", "无权限：仅超级管理员和管理员可修改教室信息");
         }
         if (classroom.getId() == null) {
             return Result.error("-1", "教室ID不能为空");
@@ -153,7 +153,7 @@ public class ClassroomController {
             HttpSession session) {
         String identity = (String) session.getAttribute("identity");
         if (!ClassroomPermissionUtil.isAdminOrmanager(identity)) {
-            return Result.error("-1", "无权限：仅管理员和宿管可修改教室信息");
+            return Result.error("-1", "无权限：仅超级管理员和管理员可修改教室信息");
         }
         if (status != 0 && status != 1) {
             return Result.error("-1", "状态值错误：0-禁用，1-启用");
@@ -175,7 +175,7 @@ public class ClassroomController {
             HttpSession session) {
         String identity = (String) session.getAttribute("identity");
         if (!ClassroomPermissionUtil.isAdminOrmanager(identity)) {
-            return Result.error("-1", "无权限：仅管理员和宿管可修改教室信息");
+            return Result.error("-1", "无权限：仅超级管理员和管理员可修改教室信息");
         }
         if (classroom.getClassroomId() == null || classroom.getBuildingId() == null) {
             return Result.error("-1", "教室号和教学楼ID不能为空");
@@ -196,7 +196,7 @@ public class ClassroomController {
             HttpSession session) {
         String identity = (String) session.getAttribute("identity");
         if (!ClassroomPermissionUtil.isAdminOrmanager(identity)) {
-            return Result.error("-1", "无权限：仅管理员和宿管可修改教室信息");
+            return Result.error("-1", "无权限：仅超级管理员和管理员可修改教室信息");
         }
         boolean success = classroomService.removeById(id);
         return success ? Result.success("删除成功") : Result.error("-1", "删除失败：教室不存在");

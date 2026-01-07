@@ -18,7 +18,7 @@ public class managerController {
     private ManagerService managerService;
 
     /**
-     * 宿管添加
+     * 管理员添加
      */
     @PostMapping("/add")
     public Result<?> add(@RequestBody Manager manager) {
@@ -31,7 +31,7 @@ public class managerController {
     }
 
     /**
-     * 宿管信息更新
+     * 管理员信息更新
      */
     @PutMapping("/update")
     public Result<?> update(@RequestBody Manager manager) {
@@ -44,7 +44,7 @@ public class managerController {
     }
 
     /**
-     * 宿管删除
+     * 管理员删除
      */
     @DeleteMapping("/delete/{username}")
     public Result<?> delete(@PathVariable String username) {
@@ -57,7 +57,7 @@ public class managerController {
     }
 
     /**
-     * 宿管查找
+     * 管理员查找
      */
     @GetMapping("/find")
     public Result<?> findPage(@RequestParam(defaultValue = "1") Integer pageNum,
@@ -72,7 +72,7 @@ public class managerController {
     }
 
     /**
-     * 宿管登录
+     * 管理员登录
      */
     @PostMapping("/login")
     public Result<?> login(@RequestBody User user, HttpSession session) {
@@ -87,5 +87,35 @@ public class managerController {
             return Result.success(o);
         }
         return Result.error("-1", "用户名或密码错误");
+    }
+    /**
+     * 管理员修改密码（明文验证+明文存储，对齐学生/教师逻辑）
+     */
+    @PostMapping("/updatePass")
+    public Result<?> updatePass(@RequestBody Manager manager) {
+        String username = manager.getUsername();
+        String oldPass = manager.getOldPass();   // 接收前端原密码
+        String newPass = manager.getNewPass();   // 接收前端新密码
+
+        // 1. 参数校验
+        if (username == null || oldPass == null || newPass == null) {
+            return Result.error("-1", "参数不能为空");
+        }
+
+        // 2. 查询当前管理员信息
+        Manager current = managerService.getById(username);
+        if (current == null) {
+            return Result.error("-1", "管理员不存在");
+        }
+
+        // 3. 明文验证原密码
+        if (!current.getPassword().equals(oldPass)) {
+            return Result.error("-1", "原密码错误");
+        }
+
+        // 4. 明文存储新密码
+        current.setPassword(newPass);
+        boolean update = managerService.updateById(current);
+        return update ? Result.success("密码修改成功") : Result.error("-1", "密码修改失败");
     }
 }

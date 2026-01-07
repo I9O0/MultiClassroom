@@ -132,10 +132,10 @@ public class ClassroomReservationController {
             @RequestParam String classroomId,
             @RequestParam String date,
             HttpSession session) {
-        // 权限调整：允许管理员和宿管访问
+        // 权限调整：允许超级管理员和管理员访问
         String identity = (String) session.getAttribute("identity");
         if (!ClassroomPermissionUtil.isAdminOrmanager(identity)) {
-            return Result.error("-1", "无权限：仅管理员和宿管可查看");
+            return Result.error("-1", "无权限：仅超级管理员和管理员可查看");
         }
 
         // 原有参数校验和查询逻辑不变...
@@ -164,10 +164,10 @@ public class ClassroomReservationController {
             @RequestParam String buildingId,
             @RequestParam String date,
             HttpSession session) {
-        // 权限校验：仅宿管可访问
+        // 权限校验：仅管理员可访问
         String identity = (String) session.getAttribute("identity");
         if (!"manager".equals(identity)) {
-            return Result.error("-1", "无权限：仅宿管可查看");
+            return Result.error("-1", "无权限：仅管理员可查看");
         }
 
         // 参数校验
@@ -235,7 +235,7 @@ public class ClassroomReservationController {
     }
     // 文件：Dormitory_backend/src/main/java/com/example/springboot/controller/ClassroomReservationController.java
     /**
-     * 管理员和宿管查询签到退记录
+     * 超级管理员和管理员查询签到退记录
      * @param pageNum 页码
      * @param pageSize 每页条数
      * @param username 可选：用户名（筛选特定用户）
@@ -257,7 +257,7 @@ public class ClassroomReservationController {
         // 权限校验
         String currentIdentity = (String) session.getAttribute("identity");
         if (!ClassroomPermissionUtil.isAdminOrmanager(currentIdentity)) {
-            return Result.error("-1", "无权限：仅管理员和宿管可查看");
+            return Result.error("-1", "无权限：仅超级管理员和管理员可查看");
         }
 
         Page<ClassroomReservation> page = new Page<>(pageNum, pageSize);

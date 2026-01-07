@@ -22,7 +22,7 @@ public class ManagerServiceImpl extends ServiceImpl<managerMapper, Manager> impl
     private managerMapper managerMapper;
 
     /**
-     * 宿管登录
+     * 管理员登录
      */
     @Override
     public Manager managerLogin(String username, String password) {
@@ -38,7 +38,7 @@ public class ManagerServiceImpl extends ServiceImpl<managerMapper, Manager> impl
     }
 
     /**
-     * 宿管新增
+     * 管理员新增
      */
     @Override
     public int addNewmanager(Manager manager) {
@@ -47,7 +47,7 @@ public class ManagerServiceImpl extends ServiceImpl<managerMapper, Manager> impl
     }
 
     /**
-     * 宿管查找
+     * 管理员查找
      */
     @Override
     public Page find(Integer pageNum, Integer pageSize, String search) {
@@ -59,7 +59,7 @@ public class ManagerServiceImpl extends ServiceImpl<managerMapper, Manager> impl
     }
 
     /**
-     * 宿管信息更新
+     * 管理员信息更新
      */
     @Override
     public int updateNewmanager(Manager manager) {
@@ -68,7 +68,7 @@ public class ManagerServiceImpl extends ServiceImpl<managerMapper, Manager> impl
     }
 
     /**
-     * 宿管删除
+     * 管理员删除
      */
     @Override
     public int deletemanager(String username) {

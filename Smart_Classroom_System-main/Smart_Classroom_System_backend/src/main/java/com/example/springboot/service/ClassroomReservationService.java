@@ -103,11 +103,11 @@ public interface ClassroomReservationService extends IService<ClassroomReservati
             String identity);
 
     /**
-     * 宿管查询本楼宇签到签退记录
+     * 管理员查询本楼宇签到签退记录
      */
     // 文件：ClassroomReservationService.java
     /**
-     * 管理员和宿管查询签到签退记录（支持日期筛选）
+     * 超级管理员和管理员查询签到签退记录（支持日期筛选）
      */
     Page<ClassroomReservation> getCheckRecordsByBuilding(
             Page<ClassroomReservation> page,

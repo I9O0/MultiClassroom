@@ -13,7 +13,7 @@ public class ClassroomPermissionUtil {
         } else if ("teacher".equals(identity)) {
             return ("J3".equals(buildingId) || "J4".equals(buildingId)) ? null : "教师仅可查看J3、J4教学楼";
         } else if ("admin".equals(identity) || "manager".equals(identity)) {
-            return null; // 管理员和宿管（教室管理员）可查看所有教学楼
+            return null; // 超级管理员和管理员（管理员）可查看所有教学楼
         }
         return "身份无效，无查询权限";
     }
@@ -29,7 +29,7 @@ public class ClassroomPermissionUtil {
         } else if ("teacher".equals(identity)) {
             return "J3,J4";
         } else if ("admin".equals(identity) || "manager".equals(identity)) {
-            return "J1,J2,J3,J4"; // 管理员和宿管可见所有教学楼
+            return "J1,J2,J3,J4"; // 超级管理员和管理员可见所有教学楼
         }
         return "";
     }
@@ -45,9 +45,9 @@ public class ClassroomPermissionUtil {
     }
 
     /**
-     * 校验是否为管理员或宿管（修改/删除/新增时使用）
+     * 校验是否为超级管理员或管理员（修改/删除/新增时使用）
      * @param identity 用户身份
-     * @return true=管理员/宿管，false=非管理员
+     * @return true=超级管理员/超级管理员，false=非管理员
      */
     public static boolean isAdminOrmanager(String identity) {
         return "admin".equals(identity) || "manager".equals(identity);
